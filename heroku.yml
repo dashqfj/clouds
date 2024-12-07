@@ -1,0 +1,6 @@
+build:
+  docker:
+    web: Dockerfile  # Укажите Dockerfile для сборки образа
+
+run:
+  web: flask run --host=0.0.0.0 --port=${PORT}  # Запуск приложения

@@ -1,0 +1,28 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - master  # Триггер деплоя при пуше в ветку master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to Server
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}  # Приватный SSH-ключ для сервера
+        run: |
+          # Настройка SSH для подключения
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H your.server.ip >> ~/.ssh/known_hosts
+          
+          # Подключение к серверу и деплой
+          ssh user@your.server.ip << EOF
+            docker pull your-dockerhub-username/flask-app:latest  # Загружаем новый образ
+            docker-compose down  # Останавливаем старые контейнеры
+            docker-compose up -d  # Запускаем обновленные
+          EOF

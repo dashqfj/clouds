@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    expose:
+      - "5000"  # Flask будет прослушивать порт 5000 внутри контейнера
+    depends_on:
+      - db  # Сервис `web` запускается после `db`
+      - redis  # Добавляем зависимость от Redis
+    volumes:
+      - .:/app  # Монтируем текущую директорию в контейнер
+    environment:
+      FLASK_ENV: development  # Устанавливаем окружение Flask
+      REDIS_HOST: redis  # Переменная окружения для Redis
+    networks:
+      - flask_network  # Добавляем общую сеть для всех сервисов
+  
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: user  # Имя пользователя базы данных
+      POSTGRES_PASSWORD: password  # Пароль пользователя базы данных
+      POSTGRES_DB: flask_db  # Имя базы данных
+    ports:
+      - "5433:5432"  # Пробрасываем порт PostgreSQL
+    networks:
+      - flask_network  # Подключаем db к общей сети
+  
+  redis:
+    image: redis:alpine  # Используем легкий образ Redis
+    ports:
+      - "6379:6379"  # Пробрасываем стандартный порт Redis
+    networks:
+      - flask_network  # Подключаем redis к общей сети
+
+  nginx:
+    image: nginx:latest  # Используем официальный образ Nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf  # Монтируем файл конфигурации Nginx
+    ports:
+      - "8080:80"  # Пробрасываем порт 80 для внешнего доступа
+    depends_on:
+      - web  # Nginx зависит от Flask-приложения
+    networks:
+      - flask_network  # Подключаем nginx к общей сети
+
+networks:
+  flask_network:  # Определяем общую сеть для взаимодействия
+    driver: bridge
